@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Result Chart</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+
+body{
+margin:0;
+font-family:Arial;
+background:#f2f2f2;
+}
+
+.top{
+background:#000;
+color:#fff;
+padding:15px;
+text-align:center;
+font-size:22px;
+font-weight:bold;
+}
+
+.box{
+background:#fff;
+margin:10px;
+padding:15px;
+border-radius:10px;
+}
+
+input,select{
+width:100%;
+padding:12px;
+margin-top:10px;
+border:1px solid #ccc;
+border-radius:8px;
+font-size:16px;
+box-sizing:border-box;
+}
+
+button{
+width:100%;
+padding:12px;
+margin-top:15px;
+background:#0057d8;
+color:white;
+border:none;
+border-radius:8px;
+font-size:18px;
+font-weight:bold;
+}
+
+button:hover{
+background:#003ea8;
+}
+
+.resultBox{
+background:#fff;
+margin:10px;
+padding:15px;
+border-radius:10px;
+}
+
+.card{
+border-bottom:1px solid #ddd;
+padding:10px 0;
+}
+
+.market{
+color:blue;
+font-weight:bold;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="top">
+ADMIN RESULT CHART
+</div>
+
+<div class="box">
+
+<input type="number" id="date" placeholder="Date">
+
+<input type="text" id="dswr" placeholder="DSWR Result">
+
+<input type="text" id="frbd" placeholder="FRBD Result">
+
+<input type="text" id="gzbd" placeholder="GZBD Result">
+
+<input type="text" id="gali" placeholder="GALI Result">
+
+<button onclick="saveResult()">
+SAVE RESULT
+</button>
+
+</div>
+
+<!-- 🔥 FILTER -->
+
+<div class="box">
+
+<select id="marketFilter" onchange="loadResults()">
+
+<option value="">All Market</option>
+
+<option value="dswr">DSWR</option>
+
+<option value="frbd">FRBD</option>
+
+<option value="gzbd">GZBD</option>
+
+<option value="gali">GALI</option>
+
+</select>
+
+<input type="number" id="dateFilter" placeholder="Search Date" oninput="loadResults()">
+
+</div>
+
+<!-- 🔥 RESULT LIST -->
+
+<div class="resultBox" id="resultData"></div>
+
+<script>
+
+// 🔥 SUPABASE CONNECT
+const client = supabase.createClient(
+"https://katbdbzoufiblnnsoxkk.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImthdGJkYnpvdWZpYmxubnNveGtrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQxMDY1NDQsImV4cCI6MjA4OTY4MjU0NH0.9_4KaSEJf4TOVD67ocNBI5UypgkfpZvdB-sKqEtVBdM"
+);
+
+// 🔥 SAVE RESULT
+async function saveResult(){
+
+let date = document.getElementById("date").value;
+let dswr = document.getElementById("dswr").value;
+let frbd = document.getElementById("frbd").value;
+let gzbd = document.getElementById("gzbd").value;
+let gali = document.getElementById("gali").value;
+
+if(!date){
+alert("Enter Date");
+return;
+}
+
+// 🔥 CHECK EXIST
+let { data: oldData } = await client
+.from("results_chart")
+.select("*")
+.eq("date", date)
+.single();
+
+if(oldData){
+
+// 🔥 UPDATE
+let { error } = await client
+.from("results_chart")
+.update({
+dswr,
+frbd,
+gzbd,
+gali
+})
+.eq("date", date);
+
+if(error){
+alert("Update Failed");
+console.log(error);
+}else{
+alert("Result Updated");
+loadResults();
+}
+
+}else{
+
+// 🔥 INSERT
+let { error } = await client
+.from("results_chart")
+.insert([{
+date,
+dswr,
+frbd,
+gzbd,
+gali
+}]);
+
+if(error){
+alert("Save Failed");
+console.log(error);
+}else{
+alert("Result Saved");
+loadResults();
+}
+
+}
+
+}
+
+// 🔥 LOAD RESULTS
+async function loadResults(){
+
+let market = document.getElementById("marketFilter").value;
+let date = document.getElementById("dateFilter").value;
+
+let { data, error } = await client
+.from("results_chart")
+.select("*")
+.order("date",{ascending:false});
+
+if(error){
+console.log(error);
+return;
+}
+
+let html = "";
+
+data.forEach(item => {
+
+if(date && item.date != date){
+return;
+}
+
+if(market && !item[market]){
+return;
+}
+
+html += `
+
+<div class="card">
+
+<p><b>Date:</b> ${item.date}</p>
+
+`;
+
+if(!market || market=="dswr"){
+html += `<p class="market">DSWR : ${item.dswr || "--"}</p>`;
+}
+
+if(!market || market=="frbd"){
+html += `<p class="market">FRBD : ${item.frbd || "--"}</p>`;
+}
+
+if(!market || market=="gzbd"){
+html += `<p class="market">GZBD : ${item.gzbd || "--"}</p>`;
+}
+
+if(!market || market=="gali"){
+html += `<p class="market">GALI : ${item.gali || "--"}</p>`;
+}
+
+html += `</div>`;
+
+});
+
+if(html==""){
+html = "<p>No Result Found</p>";
+}
+
+document.getElementById("resultData").innerHTML = html;
+
+}
+
+loadResults();
+
+</script>
+
+</body>
+</html>
