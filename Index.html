@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Result Chart</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+body{
+  margin:0;
+  font-family:Arial;
+  background:#f2f2f2;
+}
+
+.top{
+  background:#0057d8;
+  color:white;
+  padding:12px;
+  text-align:center;
+  font-size:22px;
+  font-weight:bold;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  background:white;
+}
+
+th{
+  background:#ffcc00;
+  padding:10px;
+  border:1px solid #ccc;
+}
+
+td{
+  border:1px solid #ddd;
+  text-align:center;
+  padding:10px;
+  font-size:16px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="top">
+Monthly Result Chart
+</div>
+
+<table>
+
+<tr>
+<th>DATE</th>
+<th>DSWR</th>
+<th>FRBD</th>
+<th>GZBD</th>
+<th>GALI</th>
+</tr>
+
+<tbody id="tableBody"></tbody>
+
+</table>
+
+<script>
+
+// 🔥 SUPABASE CONNECT
+const client = supabase.createClient(
+"https://katbdbzoufiblnnsoxkk.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImthdGJkYnpvdWZpYmxubnNveGtrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQxMDY1NDQsImV4cCI6MjA4OTY4MjU0NH0.9_4KaSEJf4TOVD67ocNBI5UypgkfpZvdB-sKqEtVBdM"
+);
+
+// 🔥 LOAD DATA
+async function loadChart(){
+
+let { data, error } = await client
+.from("results_chart")
+.select("*");
+
+if(error){
+alert("Error Loading Data");
+console.log(error);
+return;
+}
+
+let body = document.getElementById("tableBody");
+
+body.innerHTML = "";
+
+for(let i=1;i<=31;i++){
+
+let item = data.find(x => x.date == i) || {};
+
+body.innerHTML += `
+<tr>
+
+<td>${i}</td>
+
+<td>${item.dswr || "--"}</td>
+
+<td>${item.frbd || "--"}</td>
+
+<td>${item.gzbd || "--"}</td>
+
+<td>${item.gali || "--"}</td>
+
+</tr>
+`;
+
+}
+
+}
+
+loadChart();
+
+</script>
+
+</body>
+</html>
